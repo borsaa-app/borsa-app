@@ -1,0 +1,18 @@
+{
+  "name": "BIST AI Yatırım Terminali",
+  "short_name": "BIST AI",
+  "description": "Gerçek zamanlı BIST analiz, portföy takibi ve uyarı terminali",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e17",
+  "theme_color": "#0a0e17",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
