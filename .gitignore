@@ -46,7 +46,6 @@ local-*
 *.log
 dev.log
 dev.out.log
-test
 prompt
 
 server.log
@@ -57,8 +56,10 @@ server.log
 db/
 *.db
 .env*
+!.env.example
 
 # internal agent workspace (uygulama kodu değil)
 skills/
 worklog.md
 .z-ai-config
+.zscripts/
