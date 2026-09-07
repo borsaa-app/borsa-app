@@ -161,7 +161,7 @@ export async function GET() {
       scanned: scored.length,
       errors: errors.slice(0, 10),
       source,
-      sourceNote: `Veri kaynağı: ${source === "midas" ? "Midas" : "Yahoo Finance — İstanbul Borsası"}. Skorlar 6 aylık gerçek fiyat verisinden hesaplanmıştır.`,
+      sourceNote: `Veri kaynağı: ${source === "midas" ? "Midas" : source === "tradingview-bist" ? "TradingView — resmî BIST borsa verisi (Midas'ta görüntülenenle aynı)" : "Yahoo Finance — İstanbul Borsası"}. Skorlar 6 aylık gerçek fiyat verisinden hesaplanmıştır.`,
       fetchedAt: Date.now(),
     };
     cacheSet(CACHE_KEY, result, 3 * 60_000);

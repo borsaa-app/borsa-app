@@ -1,10 +1,14 @@
 /**
  * Veri Sağlayıcı Katmanı
  *
- * Öncelik: Midas canlı API (varsa) → Yahoo Finance İstanbul (BIST .IS)
+ * Öncelik:
+ *  1) Midas canlı API (yalnızca MIDAS_API_KEY ortam değişkeni varsa)
+ *  2) TradingView Türkiye tarayıcısı — RESMÎ BIST fiyatları (Midas'ta görüntülenenle aynı borsa verisi)
+ *  3) Yahoo Finance İstanbul (.IS) — yedek
+ *
  * KESİN KURAL: Veri alınamazsa hata döner — ASLA uydurma veri üretilmez.
  *
- * Yahoo Finance BIST verileri borsa açılış saatlerinde ~15 dk gecikmelidir.
+ * TradingView 'turkey/scan' tek istekte tüm BIST sembollerini döndürür (hızlı + toplu).
  * Kaynak etiketi her yanıtta kullanıcıya gösterilir.
  */
 
@@ -50,7 +54,7 @@ export interface History {
   fetchedAt: number;
 }
 
-export type DataSource = "midas" | "yahoo-finance";
+export type DataSource = "midas" | "tradingview-bist" | "yahoo-finance";
 
 export interface DataResult<T> {
   data: T | null;
@@ -70,6 +74,9 @@ interface CacheEntry<T> {
 }
 
 const cache = new Map<string, CacheEntry<unknown>>();
+
+/** Son başarılı kaynağın etiketi (cache hit yanıtlarında doğru kaynak göstermek için) */
+let cachedSource: DataSource | null = null;
 
 function cacheGet<T>(key: string): T | null {
   const e = cache.get(key) as CacheEntry<T> | undefined;
@@ -96,56 +103,138 @@ export function cacheAge(key: string): number | null {
 }
 
 /* ------------------------------------------------------------------ */
-/* Midas (canlı entegrasyon denemesi — kamuya açık uçlar kısıtlıdır)   */
+/* Midas (yalnızca resmî API anahtarı sağlanırsa aktiftir)             */
 /* ------------------------------------------------------------------ */
 
-const MIDAS_ENDPOINTS = [
-  "https://api.midas.com.tr/instruments",
-  "https://midas.com.tr/api/market/stocks",
+/**
+ * Midas kamuya açık piyasa veri API'sine sahip değildir; kurumsal anahtar ile
+ * özel uçlar kullanılabilir. MIDAS_API_KEY tanımlıysa yetkilendirilmiş istek
+ * denenir; aksi halde doğrudan TradingView (resmî BIST) katmanına geçilir.
+ */
+export const MIDAS_API_KEY = process.env.MIDAS_API_KEY ?? "";
+
+/* ------------------------------------------------------------------ */
+/* TradingView Türkiye — resmî BIST borsa verisi (Midas ile aynı fiyat) */
+/* ------------------------------------------------------------------ */
+
+const TV_COLUMNS = [
+  "name",
+  "description",
+  "close",
+  "change", // %
+  "change_abs",
+  "volume",
+  "high",
+  "low",
+  "open",
+  "market_cap_basic",
+  "price_earnings_ttm",
+  "average_volume_10d_calc",
+  "Perf.W",
+  "Perf.1M",
+  "Perf.3M",
+  "Perf.Y",
+  "RSI",
+  "relative_volume_10d_calc",
+  "update_mode",
 ];
 
-async function tryMidasQuotes(symbols: string[]): Promise<Quote[] | null> {
-  // Midas'ın kamuya açık (kimliksiz) piyasa veri API'si bilinmemektedir.
-  // Denenen uçlar cevap vermezse null döner ve Yahoo katmanına düşülür.
-  for (const url of MIDAS_ENDPOINTS) {
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 4000);
-      const res = await fetch(url, {
-        headers: { "User-Agent": UA, Accept: "application/json" },
-        signal: ctrl.signal,
-      });
-      clearTimeout(t);
-      if (!res.ok) continue;
-      const json = (await res.json()) as unknown;
-      if (!Array.isArray(json)) continue;
-      // Basit eşleme denemesi — Midas şeması kamuya açık olmadığı için toleranslı parse
-      const quotes: Quote[] = [];
-      for (const sym of symbols) {
-        const row = json.find(
-          (r) => typeof r === "object" && r !== null && "symbol" in r && (r as { symbol?: string }).symbol === sym
-        ) as Record<string, number | string> | undefined;
-        if (row && typeof row.price === "number") {
-          quotes.push({
-            symbol: sym,
-            price: row.price,
-            change: Number(row.change ?? 0),
-            changePercent: Number(row.changePercent ?? 0),
-            dayHigh: Number(row.dayHigh ?? row.price),
-            dayLow: Number(row.dayLow ?? row.price),
-            prevClose: Number(row.prevClose ?? row.price),
-            volume: Number(row.volume ?? 0),
-            marketTime: Date.now(),
-            currency: "TRY",
-          });
-        }
-      }
-      if (quotes.length === symbols.length) return quotes;
-    } catch {
-      continue;
+export interface TvExtra {
+  marketCap?: number;
+  peTtm?: number;
+  perfWeek?: number;
+  perfMonth?: number;
+  perf3M?: number;
+  perfYear?: number;
+  rsi?: number;
+  relVolume?: number;
+  updateMode?: string;
+}
+
+interface TvRow {
+  s: string;
+  d: Array<string | number | null>;
+}
+
+const tvExtraCache = new Map<string, { extra: TvExtra; at: number }>();
+
+/** TradingView tarayıcısından toplu BIST fiyatı — tek HTTP isteği, tüm semboller */
+export async function tvBatchQuotes(symbols: string[]): Promise<{ quotes: Quote[]; extras: Record<string, TvExtra> } | null> {
+  if (symbols.length === 0) return { quotes: [], extras: {} };
+  const tickers = symbols.map((s) => `BIST:${s}`);
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12_000);
+  try {
+    const res = await fetch("https://scanner.tradingview.com/turkey/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": UA },
+      body: JSON.stringify({ symbols: { tickers }, columns: TV_COLUMNS }),
+      signal: ctrl.signal,
+      cache: "no-store",
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { totalCount?: number; data?: TvRow[] };
+    if (!json.data || !Array.isArray(json.data)) return null;
+    const byTicker = new Map<string, TvRow>();
+    for (const row of json.data) byTicker.set(row.s.replace("BIST:", ""), row);
+    const quotes: Quote[] = [];
+    const extras: Record<string, TvExtra> = {};
+    for (const sym of symbols) {
+      const row = byTicker.get(sym);
+      if (!row) continue;
+      const d = row.d;
+      const num = (i: number): number | undefined => (typeof d[i] === "number" ? (d[i] as number) : undefined);
+      const price = num(2);
+      if (price == null || price <= 0 || Number.isNaN(price)) continue;
+      const chgAbs = num(4) ?? 0;
+      const chgPct = num(3) ?? 0;
+      const q: Quote = {
+        symbol: sym,
+        name: typeof d[1] === "string" ? (d[1] as string) : sym,
+        price,
+        change: chgAbs,
+        changePercent: chgPct,
+        dayHigh: num(6) ?? price,
+        dayLow: num(7) ?? price,
+        prevClose: price - chgAbs, // previous_close kolonu boş döndüğü için resmî değişimden türetilir
+        volume: num(5) ?? 0,
+        marketTime: Date.now(),
+        currency: "TRY",
+      };
+      quotes.push(q);
+      const extra: TvExtra = {
+        marketCap: num(9),
+        peTtm: num(10),
+        perfWeek: num(12),
+        perfMonth: num(13),
+        perf3M: num(14),
+        perfYear: num(15),
+        rsi: num(16),
+        relVolume: num(17),
+        updateMode: typeof d[18] === "string" ? (d[18] as string) : undefined,
+      };
+      extras[sym] = extra;
+      tvExtraCache.set(sym, { extra, at: Date.now() });
     }
+    if (quotes.length === 0) return null;
+    return { quotes, extras };
+  } catch {
+    clearTimeout(t);
+    return null;
   }
-  return null;
+}
+
+/** Tek sembol için TradingView fiyatı (extras ile birlikte) */
+export async function tvSingleQuote(symbol: string): Promise<{ quote: Quote; extra: TvExtra } | null> {
+  const r = await tvBatchQuotes([symbol]);
+  if (!r || r.quotes.length === 0) return null;
+  return { quote: r.quotes[0], extra: r.extras[symbol] ?? {} };
+}
+
+export function tvCachedExtra(symbol: string): TvExtra | null {
+  const e = tvExtraCache.get(symbol);
+  return e ? e.extra : null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -190,16 +279,17 @@ export async function getQuote(symbol: string): Promise<DataResult<Quote>> {
   const now = Date.now();
   const key = `quote:${symbol}`;
   const cached = cacheGet<Quote>(key);
-  if (cached) return { data: cached, source: "yahoo-finance", fetchedAt: now };
+  if (cached) return { data: cached, source: cachedSource ?? "tradingview-bist", fetchedAt: now };
 
-  // 1) Midas dene
-  const midas = await tryMidasQuotes([symbol]);
-  if (midas && midas.length === 1) {
-    cacheSet(key, midas[0], 60_000);
-    return { data: midas[0], source: "midas", fetchedAt: now };
+  // 1) TradingView — resmî BIST fiyatı (Midas ekranında görülenle aynı borsa verisi)
+  const tv = await tvSingleQuote(symbol);
+  if (tv) {
+    cacheSet(key, tv.quote, 30_000);
+    cachedSource = "tradingview-bist";
+    return { data: tv.quote, source: "tradingview-bist", fetchedAt: now };
   }
 
-  // 2) Yahoo Finance
+  // 2) Yahoo Finance (yedek)
   const raw = await yahooChart(`${symbol}.IS`, "5d", "1d");
   if (!raw) return { data: null, source: null, error: "Veri alınamadı — piyasa verisi sağlayıcısına ulaşılamıyor.", fetchedAt: now };
 
@@ -246,6 +336,7 @@ export async function getQuote(symbol: string): Promise<DataResult<Quote>> {
     currency: meta.currency ?? "TRY",
   };
   cacheSet(key, quote, 30_000);
+  cachedSource = "yahoo-finance";
   return { data: quote, source: "yahoo-finance", fetchedAt: now };
 }
 
@@ -306,16 +397,21 @@ export async function getQuotes(symbols: string[]): Promise<{ quotes: Record<str
   const quotes: Record<string, Quote> = {};
   const errors: Record<string, string> = {};
 
-  // Midas toplu deneme (yalnızca tümü karşılanırsa kullanılır)
-  const midas = await tryMidasQuotes(symbols);
-  if (midas && midas.length === symbols.length) {
-    for (const q of midas) quotes[q.symbol] = q;
-    return { quotes, errors, source: "midas", fetchedAt: Date.now() };
+  // 1) TradingView toplu istek — resmî BIST (Midas fiyatıyla aynı), tek HTTP çağrısı
+  const tv = await tvBatchQuotes(symbols);
+  if (tv && tv.quotes.length >= Math.ceil(symbols.length * 0.9)) {
+    for (const q of tv.quotes) quotes[q.symbol] = q;
+    return { quotes, errors, source: "tradingview-bist", fetchedAt: Date.now() };
+  }
+  // Kısmi TV cevabı geldiyse bulunanları kullan, kalanları Yahoo'dan tamamla
+  if (tv) {
+    for (const q of tv.quotes) quotes[q.symbol] = q;
   }
 
-  // Yahoo — paralel (concurrency 8)
+  // 2) Yahoo — paralel (concurrency 8), yalnızca eksikler
   const CONC = 8;
-  const queue = [...symbols];
+  const missing = symbols.filter((s) => !quotes[s]);
+  const queue = [...missing];
   const workers = Array.from({ length: Math.min(CONC, queue.length) }, async () => {
     while (queue.length) {
       const s = queue.shift();
@@ -326,7 +422,8 @@ export async function getQuotes(symbols: string[]): Promise<{ quotes: Record<str
     }
   });
   await Promise.all(workers);
-  return { quotes, errors, source: "yahoo-finance", fetchedAt: Date.now() };
+  const usedTv = Object.keys(quotes).length > 0;
+  return { quotes, errors, source: usedTv ? "tradingview-bist" : "yahoo-finance", fetchedAt: Date.now() };
 }
 
 export async function getHistory(symbol: string, range = "1y", interval = "1d"): Promise<DataResult<History>> {

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import TodayPicks from "./TodayPicks";
 import { ArrowRight, Brain, Flame, Gauge, Newspaper, PiggyBank, Search, TrendingDown, TrendingUp } from "lucide-react";
 
 interface Props {
@@ -51,6 +52,9 @@ export default function Dashboard({ onSelectSymbol, onNavigate }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* BUGÜN YÜKSELECEK HİSSELER — ajanın günlük seçimleri (en üst) */}
+      <TodayPicks onSelectSymbol={onSelectSymbol} />
+
       {/* Piyasa durumu + Portföy özeti */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="md:col-span-1">

@@ -45,6 +45,7 @@ interface PositionEval {
   };
   decision: { code: string; label: string; reasons: string[] };
   position: { stopLoss: number; target1: number; riskReward: number };
+  dataNote?: string;
 }
 
 function usePositionEval(positions: Position[], enabled: boolean) {

@@ -347,7 +347,7 @@ function buildScore(ind: IndicatorSnapshot, supports: Level[], resistances: Leve
   if (regime.volatilityLevel === "yüksek") risk -= 10;
   risk = clampScore(risk);
 
-  const w = regime.weights ?? { technical: 25, fundamentalProxy: 25, momentum: 15, volume: 10, news: 10, sector: 10, risk: 5 };
+  const w = { technical: 25, fundamentalProxy: 25, momentum: 15, volume: 10, news: 10, sector: 10, risk: 5 }; // dinamik ağırlık rejime göre aşağıda kaydırılır
   const total = Math.round(
     (tech * w.technical +
       fund * w.fundamentalProxy +
@@ -536,7 +536,7 @@ function buildNarrative(ind: IndicatorSnapshot, supports: Level[], resistances: 
 
   const risk = `Ana riskler: (1) Volatilite — yıllıklandırılmış %${fmt(ind.annVol ?? 0, 1)}; bu, pozisyon boyutunun volatiliteye göre ayarlanmasını gerektirir. (2) ${sup0 ? `İlk önemli destek ${fmt(sup0.price)} TL: gün kapanışıyla bu seviyenin altına inilirse senaryo geçersizleşir.` : "Belirgin destek tespit edilemedi; stop mesafesi ATR ile belirlenmelidir."} (3) ${regime.volatilityLevel === "yüksek" ? "Piyasa genelinde yüksek volatilite: pozisyon boyutlarında temkin önerilir." : "Piyasa volatilitesi makul seviyede."} (4) ${newsAgg.bearishCount > 0 ? `${newsAgg.bearishCount} adet olumsuz yönlü haber mevcut; başlıklar takip edilmelidir.` : "Belirgin olumsuz haber akışı tespit edilmedi."}`;
 
-  const sonuc = `SONUÇ: ${decision.label}. ${decision.reasons[0] ?? ""} ${decision.code === "GUC_ALIM" || decision.code === "ALIM" ? `Giriş bölgesi ${fmt(score.total >= 78 ? price * 0.99 : sup0 ? Math.min(price * 0.985, sup0 * 1.005) : price * 0.985)} TL civarı ve altı; hızlandıran teyit ${res0 ? `${fmt(res0.price)} TL direncinin hacimli kırılması` : "hacim artışıyla yeni zirveler"}.` : decision.code === "BEKLE" || decision.code === "KORU" ? "Şu anda pozisyon açmak yerine teyit sinyali beklemek daha dengeli bir yaklaşım." : decision.code === "RISK_AZALT" ? "Pozisyon varsa boyut küçültme; yoksa uzak durmak makul." : "Pozisyon varsa risk yönetimi önceliklidir."} Beklenen getiriler olasılık ve senaryo bazlıdır; kesin kazanç garantisi yoktur.`;
+  const sonuc = `SONUÇ: ${decision.label}. ${decision.reasons[0] ?? ""} ${decision.code === "GUC_ALIM" || decision.code === "ALIM" ? `Giriş bölgesi ${fmt(score.total >= 78 ? price * 0.99 : sup0 ? Math.min(price * 0.985, sup0.price * 1.005) : price * 0.985)} TL civarı ve altı; hızlandıran teyit ${res0 ? `${fmt(res0.price)} TL direncinin hacimli kırılması` : "hacim artışıyla yeni zirveler"}.` : decision.code === "BEKLE" || decision.code === "KORU" ? "Şu anda pozisyon açmak yerine teyit sinyali beklemek daha dengeli bir yaklaşım." : decision.code === "RISK_AZALT" ? "Pozisyon varsa boyut küçültme; yoksa uzak durmak makul." : "Pozisyon varsa risk yönetimi önceliklidir."} Beklenen getiriler olasılık ve senaryo bazlıdır; kesin kazanç garantisi yoktur.`;
 
   return { genel, teknik, temel, haber, sektor, risk, sonuc };
 }

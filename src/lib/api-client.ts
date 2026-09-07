@@ -126,6 +126,71 @@ export function useHistory(symbol: string | null, range = "6mo") {
   });
 }
 
+export interface DailyPicksResponse {
+  generatedAt: number;
+  marketStatus: {
+    open: boolean;
+    session: string;
+    nextEvent: string;
+  };
+  picks: Array<{
+    symbol: string;
+    name: string;
+    sector: string;
+    price: number;
+    changePercent: number;
+    direction: string;
+    todayTarget: number;
+    todayTargetHigh: number;
+    todayTargetPct: number;
+    todayTargetHighPct: number;
+    weekTarget: number;
+    weekTargetPct: number;
+    entryLow: number;
+    entryHigh: number;
+    stopLoss: number;
+    riskReward: number;
+    confidence: number;
+    profitPer100: number;
+    profitPer100High: number;
+    reason: string;
+    invalidation: string;
+    rsi: number | null;
+    volumeRatio: number | null;
+    perfWeek: number | null;
+    distanceResistancePct: number | null;
+  }>;
+  avoid: Array<{ symbol: string; name: string; price: number; changePercent: number; reason: string }>;
+  regime: {
+    type: string;
+    label: string;
+    description: string;
+    bist100Change: number;
+    bist100Trend: string;
+    volatilityLevel: string;
+    momentumScore: number;
+    advice: string;
+  };
+  headline: string;
+  sourceNote: string;
+  disclaimer: string;
+}
+
+/** Ajanın bugünkü seçimleri — "bugün ne alsam, hedefi kaç TL" sorusuna net cevap */
+export function usePicks(refreshMs = 3 * 60_000) {
+  return useQuery<DailyPicksResponse>({
+    queryKey: ["picks"],
+    queryFn: async () => {
+      const res = await fetch("/api/picks");
+      if (!res.ok) throw new Error("Günlük seçimler alınamadı");
+      return res.json();
+    },
+    refetchInterval: refreshMs,
+    staleTime: 2 * 60_000,
+  });
+}
+
+
 export function useNews(symbol: string | null, limit = 12) {
   return useQuery<MarketNewsResult & { source: string; fetchedAt: number }>({
     queryKey: ["news", symbol, limit],

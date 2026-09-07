@@ -21,3 +21,24 @@ Stage Summary:
 - Çalışan sistem: gerçek zamanlı BIST verisi (Yahoo İstanbul köprüsü, ~15dk gecikme etiketi), 57 hisse taraması, AI skor/karar motoru, senaryo bazlı tahminler (garanti yok), portföy takibi (günlük/haftalık K/Z), smart exit, düşüş/kâr/stop uyarıları (cooldown), Gmail e-posta (env ile), PWA manifest
 - Deploy: temporary URL canlı (59 dk içinde claim edilmeli) → kalıcı URL için kullanıcı token'ı veya claim gerekli
 - Kritik karar: veri uydurma YOK — kaynak etiketleri ve "veri alınamadı" durumları UI'da şeffaf
+
+---
+Task ID: 2
+Agent: Super Z (main agent)
+Task: Kullanıcı şikayetlerinin giderilmesi — canlı olmayan site, Midas fiyat uyumu, "bugün ne alsam" ekranı, Gmail uyarıları, Midas bağlantısı
+
+Work Log:
+- Sorun tespiti: geçici Vercel linkinin süresi dolmuş (site kapalıydı); fiyatlar zaten doğruydu (THYAO 296.75 = resmî BIST kapanışı)
+- Veri katmanı yeniden yazıldı: TradingView turkey/scan API birincil kaynak oldu — tek istekte 57 hisse, resmî BIST verisi (Midas'taki fiyatla aynı); Yahoo fallback; fiyat/hacim/P/E/RSI/haftalık performans tek çağrıda
+- BUGÜN YÜKSELECEK HİSSELER motoru (src/lib/analysis/picks.ts): ATR tabanlı günlük/haftalık hedef, kırılım senaryosu (dirence bitişik hisselerde direnç ötesi hedef), sıkı stop (destek varsa daha sıkı), R/R≥0.7 filtresi, güven skoru, 100 TL kazanç hesabı, uzak durulacaklar listesi; debug hunisi (57 taranan→14 aday→5 seçim)
+- /api/picks + Dashboard'a TodayPicks hero bölümü: "BUGÜNÜN HEDEFİ 61,28 TL +%3", "100 TL ile kazanç +3,00 TL", giriş bölgesi, stop, geçersizlik koşulu
+- Gmail sistemi: EmailSettings modeli (Prisma/SQLite) + email-store adaptörü (serverless'ta /tmp fallback), AES-256-GCM şifreli App Password, /api/settings/email (GET/POST/DELETE), /api/notify/test, /api/notify/report (portföy+seçim raporu), /api/cron/daily (Vercel Cron: düşüş/kâr hedefi/günlük rapor), vercel.json cron 07:00 UTC işlem günleri
+- Ayarlar ekranı yenilendi: Gmail bağlama formu + App Password adım adım rehber + test gönder + raporu şimdi e-postala; MIDAS BAĞLANTISI paneli (resmî BIST fiyat = Midas fiyatı açıklaması, dürüst API bilgisi)
+- Düzeltmeler: engine.ts sup0.price NaN bug'ı, regime.weights referansı, PositionEval.dataNote tipi, sourceNote etiketleri (tradingview-bist), footer metni
+- Doğrulama: tsc + eslint temiz; next build başarılı; browser testleri (desktop+mobil): picks kartları, Gmail formu, veri kaynak durumu görünür; e-posta API akışı uçtan uca test edildi (kayıt→okuma→gerçek SMTP denemesi→siler)
+- Vercel: anonim geçici deploy hakkı dolmuş ("temporary deployment has expired") — kalıcı URL için kullanıcı Vercel hesabı gerekli; platform preview linki ile teslim
+
+Stage Summary:
+- Site canlı (platform preview, port 3000): gerçek resmî BIST fiyatları (Midas ile aynı), bugünün seçimleri ekranı, Gmail uyarı sistemi tam kurulu
+- Kullanıcı Gmail'ini Ayarlar'a bağlayınca: düşüş e-postası, kâr hedefi e-postası, her sabah seçim+portföy raporu (site kapalıyken de cron ile)
+- Vercel kalıcı deploy için: kullanıcının `vercel login` ile hesap bağlaması gerekiyor (sandbox'ta hesap yok)

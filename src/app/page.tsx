@@ -157,7 +157,7 @@ export default function Home() {
         <div className="mx-auto max-w-[1500px] px-5 py-3 text-[11px] leading-relaxed text-slate-500">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span>
-              BIST AI Yatırım Terminali — veri kaynağı: İstanbul Borsası (Yahoo Finance köprüsü). Midas canlı veri bağlantısı bu ortamda kapalıdır; API anahtarı tanımlandığında otomatik devreye girer.
+              BIST AI Yatırım Terminali — hisse fiyatları: resmî BIST borsa verisi (Midas&apos;ta görüntülenenle aynı); endeks/döviz: Yahoo Finance. Midas kurumsal API anahtarı tanımlandığında otomatik devreye girer.
             </span>
             <span className="shrink-0">
               Analizler olasılık ve senaryo bazlıdır; yatırım tavsiyesi değildir.

@@ -30,3 +30,18 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+model EmailSettings {
+  id               String   @id @default("default")
+  email            String
+  appPasswordEnc   String
+  lossAlert        Boolean  @default(true)
+  lossThresholdPct Float    @default(5)
+  profitAlert      Boolean  @default(true)
+  profitTargetPct  Float    @default(5)
+  dailyReport      Boolean  @default(true)
+  positionsJson    String?  // cron için pozisyon anlık görüntüsü
+  totalCostSnapshot Float?  // cron için toplam maliyet
+  lastReportDate   String?  // son günlük rapor tarihi (YYYY-MM-DD)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

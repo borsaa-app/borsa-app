@@ -30,9 +30,9 @@ export async function GET() {
         usdtry: usdtry.error,
       },
       regime,
-      source: "yahoo-finance",
+      source: "tradingview-bist + yahoo",
       sourceNote:
-        "Veri kaynağı: Yahoo Finance — İstanbul Borsası / CME. Midas canlı veri bağlantısı bu ortamda kapalı; BIST verileri borsa saatlerinde ~15 dk gecikmeli olabilir.",
+        "Endeks/döviz: Yahoo Finance. Hisse fiyatları: TradingView Türkiye — resmî BIST borsa verisi (Midas'ta görüntülenenle aynı fiyat).",
       fetchedAt: Date.now(),
     });
   } catch (e) {

@@ -26,7 +26,9 @@ export async function GET(req: Request) {
       sourceNote:
         source === "midas"
           ? "Veri kaynağı: Midas"
-          : "Veri kaynağı: Yahoo Finance — İstanbul Borsası. Midas canlı veri bağlantısı bu ortamda kapalı; BIST verileri borsa saatlerinde ~15 dk gecikmeli olabilir.",
+          : source === "tradingview-bist"
+            ? "Veri kaynağı: TradingView Türkiye — resmî BIST borsa verisi (Midas'ta görüntülenenle aynı fiyat)."
+            : "Veri kaynağı: Yahoo Finance — İstanbul Borsası (yedek).",
       fetchedAt,
     });
   } catch (e) {

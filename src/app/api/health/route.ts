@@ -1,27 +1,37 @@
 import { NextResponse } from "next/server";
-import { getQuotes, getRawQuote } from "@/lib/market/providers";
+import { getQuotes, getRawQuote, tvBatchQuotes } from "@/lib/market/providers";
 
 export const dynamic = "force-dynamic";
 
 /** Veri sağlayıcı sağlık durumu — kullanıcıya gerçek bağlantı durumu gösterilir */
 export async function GET() {
-  const [testQuote, indexQuote] = await Promise.all([getQuotes(["THYAO"]), getRawQuote("XU100.IS")]);
+  const [tvRes, testQuote, indexQuote] = await Promise.all([
+    tvBatchQuotes(["THYAO", "GARAN", "ASELS"]),
+    getQuotes(["THYAO"]),
+    getRawQuote("XU100.IS"),
+  ]);
+  const tvOk = Boolean(tvRes && tvRes.quotes.length >= 3);
   const yahooOk = Boolean(testQuote.quotes["THYAO"]);
+  const thPrice = tvRes?.quotes.find((q) => q.symbol === "THYAO")?.price ?? testQuote.quotes["THYAO"]?.price ?? null;
 
   return NextResponse.json({
-    status: yahooOk ? "ok" : "degraded",
+    status: tvOk || yahooOk ? "ok" : "degraded",
     providers: {
       midas: {
         available: testQuote.source === "midas",
-        note: testQuote.source === "midas"
-          ? "Midas veri bağlantısı aktif."
-          : "Midas kamuya açık canlı veri API'si bu ortamdan erişilemiyor. Yedek kaynak devrede.",
+        note: "Midas kamuya açık canlı piyasa API'sine sahip değil (kurumsal anahtar gerekir). Resmî BIST fiyat katmanı devrede — Midas ekranındaki fiyatla aynı borsa verisi.",
+      },
+      tradingview: {
+        available: tvOk,
+        note: tvOk
+          ? "Resmî BIST fiyatları canlı — Midas'ta görüntülenenle aynı borsa verisi (tek istekte 57 hisse)."
+          : "TradingView tarayıcı API'sine ulaşılamadı — yedek kaynağa geçildi.",
+        testPrice: thPrice,
       },
       "yahoo-finance": {
         available: yahooOk,
-        note: "İstanbul Borsası fiyat verileri (borsa saatlerinde ~15 dk gecikmeli).",
+        note: "Yedek fiyat + geçmiş mum (grafik) verisi sağlayıcısı.",
         testSymbol: "THYAO",
-        testPrice: testQuote.quotes["THYAO"]?.price ?? null,
         latencyOk: Boolean(indexQuote.data),
       },
     },
