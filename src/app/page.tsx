@@ -31,8 +31,16 @@ export default function Home() {
   const lastEvalRef = useRef<number>(0);
 
   const positions = usePortfolio((s) => s.positions);
+  const loadPortfolio = usePortfolio((s) => s.loadFromServer);
   const settings = useSettings();
+  const loadSettings = useSettings((s) => s.loadFromServer);
   const clock = useMarketClock();
+
+  // DB'den başlangıç verilerini yükle
+  useEffect(() => {
+    loadPortfolio();
+    loadSettings();
+  }, [loadPortfolio, loadSettings]);
 
   const symbols = positions.map((p) => p.symbol);
   const quotes = useQuotes(symbols, Math.max(30, settings.pollingSeconds) * 1000);

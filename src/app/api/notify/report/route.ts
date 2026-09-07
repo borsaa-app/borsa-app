@@ -3,23 +3,30 @@ import { getEmailSettings, updateEmailSettings } from "@/lib/alerts/email-store"
 import { sendMail, buildReportHtml } from "@/lib/alerts/mailer";
 import { generateDailyPicks } from "@/lib/analysis/picks";
 import { getQuotes } from "@/lib/market/providers";
+import { getAllPositions } from "@/lib/db/positions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Anında portföy raporu: istemci pozisyonlarını gönderir,
+ * Anında portföy raporu: DB'den pozisyonları çeker veya istemciden alır,
  * sunucu gerçek fiyatlarla K/Z hesaplar + bugünün seçimlerini ekleyip e-postalar.
  */
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
     positions?: Array<{ symbol: string; quantity: number; avgCost: number }>;
   } | null;
-  const positions = body?.positions ?? [];
 
   const row = await getEmailSettings();
   if (!row || !row.appPasswordEnc) {
     return NextResponse.json({ error: "Gmail bağlantısı kurulmadı. Önce Ayarlar'dan Gmail hesabınızı bağlayın." }, { status: 400 });
+  }
+
+  // DB'den pozisyonları çek, yoksa istemciden gelenleri kullan
+  let positions = body?.positions ?? [];
+  if (positions.length === 0) {
+    const dbPositions = await getAllPositions();
+    positions = dbPositions.map((p) => ({ symbol: p.symbol, quantity: p.quantity, avgCost: p.avgCost }));
   }
 
   // Gerçek fiyatlarla K/Z

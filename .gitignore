@@ -36,7 +36,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -51,12 +50,6 @@ prompt
 server.log
 # Skills directory
 /skills/.vercel
-
-# runtime data & secrets (asla repoya girmesin)
-db/
-*.db
-.env*
-!.env.example
 
 # internal agent workspace (uygulama kodu değil)
 skills/

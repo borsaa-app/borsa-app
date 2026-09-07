@@ -2,7 +2,7 @@
  * Gmail e-posta ayarları — kullanıcı kendi Gmail App Password ile bağlar.
  *
  * Güvenlik:
- *  - Uygulama şifresi AES-256-GCM ile şifrelenerek saklanır (SQLite veya /tmp fallback)
+ *  - Uygulama şifresi AES-256-GCM ile şifrelenerek saklanır (Turso DB)
  *  - Anahtar: MAIL_SECRET env (yoksa türetilmiş sunucu sırrı)
  *  - Şifre asla istemciye geri dönmez
  */

@@ -2,26 +2,28 @@
 
 /**
  * Ayarlar Store — bildirim eşikleri, e-posta, tarama aralığı
- * localStorage kalıcılığı ile.
+ * Turso DB kalıcılığı (API üzerinden).
  */
 
 import { create } from "zustand";
 
 export interface Settings {
-  dropAlertPct: number; // default -5
-  riseAlertPct: number; // default +5
-  targetAlertPct: number; // hedef 1 ulaşınca
-  cooldownMinutes: number; // aynı uyarı tekrarı arası dk
-  pollingSeconds: number; // fiyatlama tarama aralığı
-  emailTo: string; // bildirim e-postası
-  emailEnabled: boolean; // e-posta bildirimi açık mı
-  browserNotify: boolean; // tarayıcı bildirimi
+  dropAlertPct: number;
+  riseAlertPct: number;
+  targetAlertPct: number;
+  cooldownMinutes: number;
+  pollingSeconds: number;
+  emailTo: string;
+  emailEnabled: boolean;
+  browserNotify: boolean;
   soundNotify: boolean;
-  minInvestment: number; // 100 TL
+  minInvestment: number;
 }
 
 interface SettingsState extends Settings {
+  loaded: boolean;
   update: (s: Partial<Settings>) => void;
+  loadFromServer: () => Promise<void>;
 }
 
 const DEFAULTS: Settings = {
@@ -37,30 +39,31 @@ const DEFAULTS: Settings = {
   minInvestment: 100,
 };
 
-const LS_KEY = "bist-ai-terminal-settings-v1";
-
-function load(): Settings {
-  if (typeof window === "undefined") return DEFAULTS;
-  try {
-    const raw = window.localStorage.getItem(LS_KEY);
-    if (!raw) return DEFAULTS;
-    return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
-  } catch {
-    return DEFAULTS;
-  }
-}
-
 export const useSettings = create<SettingsState>((set, get) => ({
-  ...load(),
+  ...DEFAULTS,
+  loaded: false,
+
+  loadFromServer: async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        set({ ...DEFAULTS, ...data, loaded: true });
+      } else {
+        set({ loaded: true });
+      }
+    } catch {
+      set({ loaded: true });
+    }
+  },
+
   update: (s) => {
     set(s as SettingsState);
-    if (typeof window !== "undefined") {
-      try {
-        const { update: _u, ...rest } = get();
-        window.localStorage.setItem(LS_KEY, JSON.stringify(rest));
-      } catch {
-        // yut
-      }
-    }
+    const { loaded: _l, update: _u, ...rest } = get();
+    fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(rest),
+    }).catch(() => {});
   },
 }));

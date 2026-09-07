@@ -3,6 +3,7 @@ import { getEmailSettings, updateEmailSettings } from "@/lib/alerts/email-store"
 import { sendMail, buildReportHtml } from "@/lib/alerts/mailer";
 import { generateDailyPicks } from "@/lib/analysis/picks";
 import { getQuotes } from "@/lib/market/providers";
+import { getAllPositions } from "@/lib/db/positions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -33,13 +34,9 @@ export async function GET(req: Request) {
   const picks = await generateDailyPicks();
   const messages: string[] = [];
 
-  // Portföy anlık görüntüsü
-  let snapshot: Array<{ symbol: string; quantity: number; avgCost: number }> = [];
-  try {
-    snapshot = settings.positionsJson ? (JSON.parse(settings.positionsJson) as typeof snapshot) : [];
-  } catch {
-    snapshot = [];
-  }
+  // Portföy: DB'den pozisyonları çek
+  const dbPositions = await getAllPositions();
+  const snapshot = dbPositions.map((p) => ({ symbol: p.symbol, quantity: p.quantity, avgCost: p.avgCost }));
 
   let portfolio = { totalValue: 0, dailyPL: 0, totalPL: 0, totalPLPct: 0 };
   let built: Array<{ symbol: string; quantity: number; avgCost: number; price: number; prevClose: number; plTL: number; plPct: number }> = [];
@@ -73,7 +70,7 @@ export async function GET(req: Request) {
         intro: `Portföyünüz belirlediğiniz %${settings.lossThresholdPct} kayıp eşiğinin altına indi (%${portfolio.totalPLPct.toFixed(2)}). Pozisyonlarınızı ve stop seviyelerini kontrol edin.`,
         positions: built.map((p) => ({ symbol: p.symbol, quantity: p.quantity, avgCost: p.avgCost, price: p.price, plPct: p.plPct, plTL: p.plTL })),
         portfolio,
-        footerNote: "Bu uyarı kayıtlı pozisyon anlık görüntünüzden üretilmiştir. Yatırım tavsiyesi değildir.",
+        footerNote: "Bu uyarı veritabanındaki pozisyonlardan üretilmiştir. Yatırım tavsiyesi değildir.",
       }),
     });
     messages.push(res.ok ? "düşüş uyarısı gönderildi" : `düşüş uyarısı hatası: ${res.error}`);
