@@ -51,67 +51,64 @@ export default function Dashboard({ onSelectSymbol, onNavigate }: Props) {
   const totalPLPct = totalCost > 0 ? (totalPL / totalCost) * 100 : 0;
 
   return (
-    <div className="space-y-4">
-      {/* BUGÜN YÜKSELECEK HİSSELER — ajanın günlük seçimleri (en üst) */}
+    <div className="space-y-3">
+      {/* BUGÜN YÜKSELECEK HİSSELER */}
       <TodayPicks onSelectSymbol={onSelectSymbol} />
 
-      {/* Piyasa durumu + Portföy özeti */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Piyasa durumu + Portföy özeti — 3 kolon yoğun grid */}
+      <div className="grid gap-3 md:grid-cols-3">
         <Card className="md:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Gauge className="h-4 w-4 text-sky-500" /> PİYASA DURUMU
+          <CardHeader className="pb-1">
+            <CardTitle className="flex items-center gap-1.5 text-xs">
+              <Gauge className="h-3.5 w-3.5 text-sky-500" /> PİYASA
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-1.5 text-xs">
             {market.isLoading ? (
               <>
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-3 w-full" />
               </>
             ) : regime ? (
               <>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-lg font-bold">{regime.label}</span>
-                  <span className={cn("tabular-nums", regime.bist100Trend === "yukari" ? "text-emerald-500" : regime.bist100Trend === "asagi" ? "text-red-500" : "text-muted-foreground")}>
+                  <span className="text-sm font-bold">{regime.label}</span>
+                  <span className={cn("tabular-nums text-[11px]", regime.bist100Trend === "yukari" ? "text-emerald-500" : regime.bist100Trend === "asagi" ? "text-red-500" : "text-muted-foreground")}>
                     20g: {fmtPct(regime.bist100Change)}
                   </span>
                 </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">{regime.description}</p>
-                <p className="border-t pt-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">Ajan notu:</span> {regime.advice}
+                <p className="text-[11px] leading-snug text-muted-foreground line-clamp-2">{regime.description}</p>
+                <p className="border-t pt-1.5 text-[11px] text-muted-foreground">
+                  <span className="font-medium text-foreground">Ajan:</span> {regime.advice}
                 </p>
-                {market.data && (
-                  <p className="text-[10px] text-muted-foreground">{market.data.sourceNote}</p>
-                )}
               </>
             ) : (
-              <p className="text-xs text-red-500">Gerçek zamanlı veri bağlantısı aktif değil.</p>
+              <p className="text-[11px] text-red-500">Veri baglantisi aktif degil.</p>
             )}
           </CardContent>
         </Card>
 
         <Card className="md:col-span-2">
-          <CardHeader className="flex-row items-center justify-between pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <PiggyBank className="h-4 w-4 text-emerald-500" /> PORTFÖY
+          <CardHeader className="flex-row items-center justify-between pb-1">
+            <CardTitle className="flex items-center gap-1.5 text-xs">
+              <PiggyBank className="h-3.5 w-3.5 text-emerald-500" /> PORTFÖY
             </CardTitle>
-            <button onClick={() => onNavigate("portfolio")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-              Portföy paneline git <ArrowRight className="h-3 w-3" />
+            <button onClick={() => onNavigate("portfolio")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
+              Git <ArrowRight className="h-2.5 w-2.5" />
             </button>
           </CardHeader>
           <CardContent>
             {positions.length === 0 ? (
-              <div className="flex h-[90px] flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-                <span>Portföyünüzde pozisyon yok.</span>
-                <button onClick={() => onNavigate("portfolio")} className="text-sky-500 underline-offset-2 hover:underline">
-                  İlk pozisyonunuzu ekleyin →
+              <div className="flex h-[60px] flex-col items-center justify-center gap-1 text-center text-[11px] text-muted-foreground">
+                <span>Pozisyon yok.</span>
+                <button onClick={() => onNavigate("portfolio")} className="text-sky-500 hover:underline">
+                  Ilk pozisyonu ekleyin
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Toplam Değer" value={fmtTL(totalValue)} />
-                <Stat label="Bugünkü K/Z" value={`${dailyPL >= 0 ? "+" : "-"}${fmtTL(Math.abs(dailyPL))}`} tone={dailyPL >= 0 ? "up" : "down"} />
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <Stat label="Deger" value={fmtTL(totalValue)} />
+                <Stat label="Gunluk K/Z" value={`${dailyPL >= 0 ? "+" : "-"}${fmtTL(Math.abs(dailyPL))}`} tone={dailyPL >= 0 ? "up" : "down"} />
                 <Stat label="Toplam K/Z" value={`${totalPL >= 0 ? "+" : "-"}${fmtTL(Math.abs(totalPL))}`} tone={totalPL >= 0 ? "up" : "down"} sub={fmtPctNL(totalPLPct)} />
                 <Stat label="Pozisyon" value={`${positions.length} hisse`} />
               </div>
@@ -122,93 +119,90 @@ export default function Dashboard({ onSelectSymbol, onNavigate }: Props) {
 
       {/* En güçlü fırsatlar */}
       <Card>
-        <CardHeader className="flex-row items-center justify-between pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Brain className="h-4 w-4 text-violet-500" /> AI&apos;NIN BUGÜNKÜ EN GÜÇLÜ FIRSATLARI
+        <CardHeader className="flex-row items-center justify-between pb-1">
+          <CardTitle className="flex items-center gap-1.5 text-xs">
+            <Brain className="h-3.5 w-3.5 text-violet-500" /> AI FIRSATLARI
           </CardTitle>
-          <button onClick={() => onNavigate("scanner")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-            <Search className="h-3 w-3" /> Tüm listeler
+          <button onClick={() => onNavigate("scanner")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
+            <Search className="h-2.5 w-2.5" /> Tum liste
           </button>
         </CardHeader>
         <CardContent>
           {scan.isLoading ? (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-14 w-full" />
+                <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
           ) : scan.isError ? (
-            <p className="text-xs text-red-500">Tarama şu anda yapılamadı. {scan.error instanceof Error ? scan.error.message : ""}</p>
+            <p className="text-[11px] text-red-500">Tarama yapilamadi.</p>
           ) : top.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Yeterli veri bulunan hisse yok — veri kaynağı kontrol ediliyor.</p>
+            <p className="text-[11px] text-muted-foreground">Uygun hisse yok.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {top.slice(0, 5).map((r, i) => (
                 <OpportunityRow key={r.symbol} rank={i + 1} row={r} onSelect={onSelectSymbol} />
               ))}
-              {scan.data?.sourceNote && <p className="pt-1 text-[10px] text-muted-foreground">{scan.data.sourceNote} Taranan hisse: {scan.data.scanned}</p>}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Momentum + Düşenler */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         <MiniList
-          title="EN GÜÇLÜ MOMENTUM"
-          icon={<Flame className="h-4 w-4 text-orange-500" />}
+          title="MOMENTUM"
+          icon={<Flame className="h-3.5 w-3.5 text-orange-500" />}
           rows={momentum.slice(0, 6)}
           onSelect={onSelectSymbol}
           loading={scan.isLoading}
-          note="RSI + hacim oranına göre sıralandı. Momentum güçlü ama dirence yakınlığı kontrol edilmeli."
         />
         <MiniList
-          title="EN ÇOK DÜŞENLER"
-          icon={<TrendingDown className="h-4 w-4 text-red-500" />}
+          title="DUSENLER"
+          icon={<TrendingDown className="h-3.5 w-3.5 text-red-500" />}
           rows={losers.slice(0, 6)}
           onSelect={onSelectSymbol}
           loading={scan.isLoading}
-          note="Günlük en çok düşen hisseler. Toparlanma ihtimali için 'Düşüş Sonrası Toparlanma' listesine bakın."
         />
       </div>
 
       {/* Haberler */}
       <Card>
-        <CardHeader className="flex-row items-center justify-between pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Newspaper className="h-4 w-4 text-sky-500" /> PİYASA HABERLERİ
+        <CardHeader className="flex-row items-center justify-between pb-1">
+          <CardTitle className="flex items-center gap-1.5 text-xs">
+            <Newspaper className="h-3.5 w-3.5 text-sky-500" /> HABERLER
           </CardTitle>
-          <button onClick={() => onNavigate("news")} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-            Tüm haberler <ArrowRight className="h-3 w-3" />
+          <button onClick={() => onNavigate("news")} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
+            Tum <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </CardHeader>
         <CardContent>
           {news.isLoading ? (
-            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-16 w-full" />
           ) : news.data && news.data.items.length > 0 ? (
-            <div className="space-y-1.5">
-              {news.data.items.slice(0, 5).map((n, i) => (
+            <div className="space-y-1">
+              {news.data.items.slice(0, 4).map((n, i) => (
                 <a
                   key={i}
                   href={n.link}
                   target="_blank"
                   rel="noreferrer"
-                  className="block rounded-md border-l-2 border-transparent px-2 py-1.5 text-xs transition hover:border-sky-500 hover:bg-accent"
+                  className="block rounded-md border-l-2 border-transparent px-2 py-1 text-[11px] transition hover:border-sky-500 hover:bg-accent"
                 >
-                  <div className="flex items-start gap-2">
-                    <span className={cn("mt-0.5 shrink-0 rounded px-1 text-[10px] font-semibold", n.sentimentLabel === "OLUMLU" ? "bg-emerald-500/15 text-emerald-500" : n.sentimentLabel === "OLUMSUZ" ? "bg-red-500/15 text-red-500" : "bg-muted text-muted-foreground")}>
+                  <div className="flex items-start gap-1.5">
+                    <span className={cn("mt-0.5 shrink-0 rounded px-1 text-[9px] font-semibold", n.sentimentLabel === "OLUMLU" ? "bg-emerald-500/15 text-emerald-500" : n.sentimentLabel === "OLUMSUZ" ? "bg-red-500/15 text-red-500" : "bg-muted text-muted-foreground")}>
                       {n.sentimentLabel}
                     </span>
-                    <span className="line-clamp-2">{n.title}</span>
+                    <span className="line-clamp-1">{n.title}</span>
                   </div>
-                  <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                  <span className="mt-0.5 block text-[9px] text-muted-foreground">
                     {n.source} · {timeAgo(n.publishedAt)}
                   </span>
                 </a>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">Haber alınamadı veya güncel haber yok. Haberler Google Haberler RSS üzerinden gelir; bulunamadıysa uydurulmaz.</p>
+            <p className="text-[11px] text-muted-foreground">Haber yok.</p>
           )}
         </CardContent>
       </Card>
@@ -218,65 +212,63 @@ export default function Dashboard({ onSelectSymbol, onNavigate }: Props) {
 
 function Stat({ label, value, tone, sub }: { label: string; value: string; tone?: "up" | "down"; sub?: string }) {
   return (
-    <div className="rounded-lg border bg-muted/30 p-3">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className={cn("mt-0.5 text-sm font-bold tabular-nums", tone === "up" && "text-emerald-500", tone === "down" && "text-red-500")}>{value}</div>
-      {sub && <div className={cn("text-[10px] tabular-nums", tone === "up" ? "text-emerald-500" : tone === "down" ? "text-red-500" : "text-muted-foreground")}>{sub}</div>}
+    <div className="rounded-lg border bg-muted/30 p-2">
+      <div className="text-[10px] text-muted-foreground">{label}</div>
+      <div className={cn("mt-0.5 text-xs font-bold tabular-nums", tone === "up" && "text-emerald-500", tone === "down" && "text-red-500")}>{value}</div>
+      {sub && <div className={cn("text-[9px] tabular-nums", tone === "up" ? "text-emerald-500" : tone === "down" ? "text-red-500" : "text-muted-foreground")}>{sub}</div>}
     </div>
   );
 }
 
 function OpportunityRow({ rank, row, onSelect }: { rank: number; row: { symbol: string; name: string; price: number; changePercent: number; score: number; reason: string; rsi: number | null }; onSelect: (s: string) => void }) {
-  const scoreLabel = row.score >= 85 ? "ÇOK GÜÇLÜ" : row.score >= 70 ? "GÜÇLÜ" : row.score >= 55 ? "ORTA" : "ZAYIF";
+  const scoreLabel = row.score >= 85 ? "GÜÇLÜ" : row.score >= 70 ? "İYİ" : row.score >= 55 ? "ORTA" : "ZAYIF";
   const scoreColor = row.score >= 70 ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" : row.score >= 55 ? "bg-amber-500/15 text-amber-500 border-amber-500/30" : "bg-muted text-muted-foreground border-border";
   return (
     <button
       onClick={() => onSelect(row.symbol)}
-      className="group flex w-full items-center gap-3 rounded-lg border p-2.5 text-start transition hover:border-violet-500/40 hover:bg-violet-500/5"
+      className="group flex w-full items-center gap-2 rounded-lg border p-2 text-start transition hover:border-violet-500/40 hover:bg-violet-500/5"
     >
-      <span className="w-5 shrink-0 text-center text-sm font-bold text-muted-foreground">{rank}</span>
+      <span className="w-4 shrink-0 text-center text-[11px] font-bold text-muted-foreground">{rank}</span>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="font-bold">{row.symbol}</span>
-          <span className="truncate text-xs text-muted-foreground">{row.name}</span>
-          <span className="tabular-nums text-sm font-semibold">{fmtNum(row.price)} TL</span>
-          <span className={cn("text-xs tabular-nums", row.changePercent >= 0 ? "text-emerald-500" : "text-red-500")}>{fmtPct(row.changePercent)}</span>
+        <div className="flex flex-wrap items-baseline gap-1.5">
+          <span className="text-[11px] font-bold">{row.symbol}</span>
+          <span className="truncate text-[10px] text-muted-foreground">{row.name}</span>
+          <span className="tabular-nums text-[11px] font-semibold">{fmtNum(row.price)} TL</span>
+          <span className={cn("text-[10px] tabular-nums", row.changePercent >= 0 ? "text-emerald-500" : "text-red-500")}>{fmtPct(row.changePercent)}</span>
         </div>
-        <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{row.reason}</p>
+        <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">{row.reason}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Badge variant="outline" className={cn("text-[10px] font-bold", scoreColor)}>
-          {row.score}/100 {scoreLabel}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Badge variant="outline" className={cn("text-[9px] font-bold", scoreColor)}>
+          {row.score} {scoreLabel}
         </Badge>
-        <span className="hidden text-[10px] text-muted-foreground sm:inline">RSI {row.rsi != null ? fmtNum(row.rsi, 1) : "—"}</span>
-        <TrendingUp className="h-4 w-4 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+        <TrendingUp className="h-3 w-3 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
       </div>
     </button>
   );
 }
 
-function MiniList({ title, icon, rows, onSelect, loading, note }: { title: string; icon: React.ReactNode; rows: Array<{ symbol: string; name: string; price: number; changePercent: number; reason: string }>; onSelect: (s: string) => void; loading: boolean; note: string }) {
+function MiniList({ title, icon, rows, onSelect, loading }: { title: string; icon: React.ReactNode; rows: Array<{ symbol: string; name: string; price: number; changePercent: number; reason: string }>; onSelect: (s: string) => void; loading: boolean }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">{icon} {title}</CardTitle>
+      <CardHeader className="pb-1">
+        <CardTitle className="flex items-center gap-1.5 text-xs">{icon} {title}</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-24 w-full" />
         ) : rows.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Liste için yeterli veri yok.</p>
+          <p className="text-[11px] text-muted-foreground">Veri yok.</p>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {rows.map((r) => (
-              <button key={r.symbol} onClick={() => onSelect(r.symbol)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-xs transition hover:bg-accent">
+              <button key={r.symbol} onClick={() => onSelect(r.symbol)} className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-start text-[11px] transition hover:bg-accent">
                 <span className="font-bold">{r.symbol}</span>
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">{r.name}</span>
                 <span className="tabular-nums">{fmtNum(r.price)}</span>
-                <span className={cn("w-14 text-end tabular-nums", r.changePercent >= 0 ? "text-emerald-500" : "text-red-500")}>{fmtPct(r.changePercent)}</span>
+                <span className={cn("w-12 text-end tabular-nums", r.changePercent >= 0 ? "text-emerald-500" : "text-red-500")}>{fmtPct(r.changePercent)}</span>
               </button>
             ))}
-            <p className="pt-1 text-[10px] text-muted-foreground">{note}</p>
           </div>
         )}
       </CardContent>

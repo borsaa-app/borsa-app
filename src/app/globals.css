@@ -144,6 +144,34 @@
   background: rgba(148, 163, 184, 0.45);
 }
 
+/* ── Density token'ları ── */
+:root {
+  --space-card: 0.75rem;
+  --space-row: 0.375rem;
+  --text-base: 0.6875rem;
+  --text-base-lh: 11px;
+}
+
+/* ── Kompakt kart & satır stilleri ── */
+.terminal-bg [data-slot="card"] {
+  padding: var(--space-card);
+  gap: var(--space-card);
+}
+.terminal-bg [data-slot="card-header"] {
+  padding-bottom: 0.375rem;
+}
+.terminal-bg [data-slot="card-content"] {
+  padding-left: var(--space-card);
+  padding-right: var(--space-card);
+}
+.terminal-bg [data-slot="card-footer"] {
+  padding-left: var(--space-card);
+  padding-right: var(--space-card);
+}
+
+/* ── Tabular nums ── */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
 /* shadcn bileşenlerinin terminal temasına uydurulması */
 .terminal-bg [data-slot="card"],
 .terminal-bg [data-slot="dialog-content"] {
@@ -161,4 +189,16 @@
 }
 .terminal-bg [data-slot="skeleton"] {
   background-color: rgba(148, 163, 184, 0.12);
+}
+
+/* ── Marquee animasyonu ── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Safe area desteği ── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-top { padding-top: env(safe-area-inset-top); }
 }

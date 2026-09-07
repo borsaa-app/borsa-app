@@ -1,18 +1,51 @@
 {
-  "name": "BIST AI Yatırım Terminali",
+  "name": "BIST AI Yatirim Terminali",
   "short_name": "BIST AI",
-  "description": "Gerçek zamanlı BIST analiz, portföy takibi ve uyarı terminali",
+  "description": "Gercek zamanli BIST analiz, portfoy takibi ve uyari terminali",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0a0e17",
   "theme_color": "#0a0e17",
   "lang": "tr",
+  "scope": "/",
+  "categories": ["finance", "business"],
   "icons": [
     {
-      "src": "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+      "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Portfoy",
+      "url": "/?view=portfolio",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tarama",
+      "url": "/?view=scanner",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
