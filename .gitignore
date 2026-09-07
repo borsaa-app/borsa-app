@@ -52,3 +52,13 @@ prompt
 server.log
 # Skills directory
 /skills/.vercel
+
+# runtime data & secrets (asla repoya girmesin)
+db/
+*.db
+.env*
+
+# internal agent workspace (uygulama kodu değil)
+skills/
+worklog.md
+.z-ai-config
